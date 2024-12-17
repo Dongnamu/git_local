@@ -26,9 +26,13 @@ class DBConnect:
         else:
             # if just created (either new repository or new branch)
             if parent_hash != "0000000000000000000000000000000000000000":
+                parent_id = None
                 query = "SELECT id FROM git_repository WHERE name = %s AND hash = %s;"
                 self.__cursor.execute(query, (repository, parent_hash))
-                parent_id = self.__cursor.fetchone()['id']
+                result = self.__cursor.fetchone()
+                
+                if result is not None:
+                    parent_id = result['id']
                 
             query = "INSERT INTO git_repository(name, hash, parent_id, log, commit_time) VALUES(%s, %s, %s, %s, %s)"
             self.__cursor.execute(query, (repository, hash, parent_id, log, commit_time))
