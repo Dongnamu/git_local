@@ -1,5 +1,5 @@
-import pymysql
 import json
+import pymysql
 
 class DBConnect:
     def __init__(self, user, passwd, db, host='localhost', port=3306):
