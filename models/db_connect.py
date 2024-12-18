@@ -1,5 +1,6 @@
-import pymysql
 import json
+import pymysql
+from services.utilities import decode_files, request_to_coder_model
 
 class DBConnect:
     def __init__(self, user, passwd, db, host='localhost', port=3306):
@@ -52,8 +53,9 @@ class DBConnect:
                 content_id = result['id']
                 print("fetched file id from table")
             else:
-                query = 'insert into content_cache(content) values(%s)'
-                self.__cursor.execute(query, (content))
+                review = request_to_coder_model(decode_files(content))
+                query = 'insert into content_cache(content, report) values(%s, %s)'
+                self.__cursor.execute(query, (content, review))
                 content_id = self.__cursor.lastrowid
                 self.__conn.commit()
                 print("file added to database")
