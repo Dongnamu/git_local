@@ -1,0 +1,9 @@
+*.env
+*.ini
+__pycache__/
+
+# macOS 관련 불필요 파일
+.DS_Store
+
+# VSCode 설정 파일들 (원하면 제외)
+.vscode/

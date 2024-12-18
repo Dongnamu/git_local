@@ -14,8 +14,8 @@ import configparser
 
 config = configparser.ConfigParser()
 
-config.read('../config.ini', encoding='utf-8')
-
+config.read('/home/ubuntu/th/git_local/config.ini', encoding='utf-8')
+print(config['CONFIG'])
 app = Flask(__name__)
 
 # GitHub Webhook Secret (GitHub 웹훅 설정 시 사용한 비밀 키)
@@ -31,7 +31,6 @@ def github_webhook():
     signature = request.headers.get("X-Hub-Signature-256")
     if not signature:
         abort(400, "Signature missing")
-
     # 요청 본문 검증
     payload = request.data
     calculated_signature = "sha256=" + hmac.new(
@@ -96,4 +95,4 @@ def github_webhook():
     return {"msg": "Event received"}
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=True)
