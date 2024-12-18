@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Nested Folder Fix: Only Child Folder Toggles</title>
+
+  <!-- Highlight.js CSS (테마 예시) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #fff;
+      color: #37352f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      display: flex;  
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 260px;
+      background-color: #f3f3f3;
+      border-right: 1px solid #e3e3e3;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .sidebar h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding-left: 10px;
+      margin: 0;
+    }
+
+    /* 폴더 항목 */
+    .folder-item {
+      margin: 4px 0;
+      padding: 4px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 4px;
+      user-select: none; /* 텍스트 드래그 방지 */
+    }
+    .folder-arrow {
+      width: 16px;
+      display: inline-block;
+      text-align: center;
+      margin-right: 4px;
+    }
+    .folder-contents {
+      margin-left: 8px;
+      padding-left: 12px;
+      border-left: 2px dotted #ccc;
+    }
+    .collapsed {
+      display: none;
+    }
+
+    /* 파일 항목 */
+    .file-item {
+      margin: 4px 0;
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 4px;
+      user-select: none;
+      font-weight: normal;
+    }
+    .file-item:hover {
+      background-color: #e8e8e8;
+    }
+    .file-item.active {
+      background-color: #d8d8d8;
+      font-weight: 600;
+    }
+
+    /* 메인 컨테이너 (코드 + 리포트) */
+    .container {
+      flex: 1;
+      margin: 0 auto;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    /* 코드와 리포트를 가로 배치 */
+    .content-wrapper {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    /* 코드 블록 전체 */
+    .code-block {
+      flex: 1;
+      background-color: #f6f8fa;
+      border-radius: 6px;
+      padding: 16px;
+      border: none;
+      overflow-x: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .code-language-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .code-block pre {
+      margin: 0;
+    }
+
+    /* 리포트 문단 (Notion-style) */
+    .report-block {
+      flex: 1;
+      background-color: #fff;
+      border: 1px solid #e3e3e3;
+      border-radius: 6px;
+      padding: 16px;
+      min-height: 200px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>File Explorer</h2>
+    <ul>
+      <!-- 예시: 여러 폴더 & Nested 폴더 -->
+      <li class="folder-item">
+        <span class="folder-arrow">▾</span> src
+        <ul class="folder-contents">
+          <!-- 중첩 폴더 -->
+          <li class="folder-item">
+            <span class="folder-arrow">▾</span> components
+            <ul class="folder-contents">
+              <li class="file-item" data-file-id="button.js">button.js</li>
+              <li class="file-item" data-file-id="modal.js">modal.js</li>
+            </ul>
+          </li>
+          <!-- src 폴더 안의 파일들 -->
+          <li class="file-item" data-file-id="main.js">main.js</li>
+          <li class="file-item" data-file-id="utils.js">utils.js</li>
+        </ul>
+      </li>
+
+      <li class="folder-item">
+        <span class="folder-arrow">▾</span> test
+        <ul class="folder-contents">
+          <li class="file-item" data-file-id="test.spec.js">test.spec.js</li>
+        </ul>
+      </li>
+
+      <!-- 최상위 파일 -->
+      <li class="file-item" data-file-id="readme.md">readme.md</li>
+      <li class="file-item" data-file-id="license.txt">license.txt</li>
+    </ul>
+  </div>
+
+  <div class="container">
+    <h1>코드 & 리포트 뷰어</h1>
+
+    <div class="content-wrapper">
+      <div class="code-block">
+        <div class="code-language-label"></div>
+        <pre><code id="codeArea"></code></pre>
+      </div>
+      <div class="report-block" id="reportBlock">
+        파일을 선택하세요...
+      </div>
+    </div>
+  </div>
+
+  <!-- Highlight.js 라이브러리 (코어) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script>
+    const filesData = {
+      "button.js": {
+        code: 
+`// button.js
+export function Button(props) {
+  console.log("Create a Button");
+}`,
+        report: "button.js는 'components' 폴더 내 버튼 컴포넌트 예시입니다."
+      },
+      "modal.js": {
+        code:
+`// modal.js
+export function Modal(props) {
+  console.log("Create a Modal");
+}`,
+        report: "modal.js는 'components' 폴더 내 모달 컴포넌트 예시입니다."
+      },
+      "main.js": {
+        code:
+`function add(a, b) {
+  return a + b;
+}
+const result = add(2, 3);
+console.log('main.js Result:', result);`,
+        report: "main.js: 프로젝트의 main 스크립트."
+      },
+      "utils.js": {
+        code:
+`export function multiply(a, b) {
+  return a * b;
+}
+console.log("utils.js loaded");`,
+        report: "utils.js: 재사용 가능한 유틸 함수 모음."
+      },
+      "test.spec.js": {
+        code:
+`import { multiply } from '../src/utils.js';
+test('multiply', () => {
+  if (multiply(2, 3) !== 6) {
+    throw new Error("Multiply test failed");
+  }
+});`,
+        report: "test.spec.js: multiply 함수를 테스트하는 간단한 유닛 테스트."
+      },
+      "readme.md": {
+        code: 
+`# README
+This is a sample README at the root level.
+`,
+        report: "프로젝트 개요, 사용 방법 등을 설명하는 파일입니다."
+      },
+      "license.txt": {
+        code:
+`MIT License
+
+Copyright ...
+`,
+        report: "프로젝트의 라이센스 정보가 담긴 파일입니다."
+      }
+    };
+
+    const codeArea = document.getElementById('codeArea');
+    const reportBlock = document.getElementById('reportBlock');
+    const labelElement = document.querySelector('.code-language-label');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 폴더 토글 기능 (각 폴더마다 자기 자식만 접기/펼치기)
+      document.querySelectorAll('.folder-item').forEach(folder => {
+        folder.addEventListener('click', (e) => {
+          // 폴더 클릭 이벤트가 상위 폴더로 버블링되지 않게 차단
+          e.stopPropagation();
+
+          // 해당 폴더의 직속 <ul.folder-contents> 찾기
+          const subUl = folder.querySelector(':scope > .folder-contents');
+          const arrow = folder.querySelector(':scope > .folder-arrow');
+
+          if (subUl && arrow) {
+            subUl.classList.toggle('collapsed');
+            arrow.textContent = subUl.classList.contains('collapsed') ? '▸' : '▾';
+          }
+        });
+      });
+
+      // 파일 선택 기능
+      document.querySelectorAll('.file-item').forEach(fileItem => {
+        fileItem.addEventListener('click', (e) => {
+          e.stopPropagation();  // 폴더로 버블링 방지
+
+          // 모든 파일에서 active 제거
+          document.querySelectorAll('.file-item').forEach(li => {
+            li.classList.remove('active');
+          });
+          fileItem.classList.add('active');
+
+          // 파일ID로 코드/리포트 로드
+          const fileId = fileItem.getAttribute('data-file-id');
+          const fileData = filesData[fileId];
+          if (fileData) {
+            codeArea.textContent = fileData.code;
+            reportBlock.textContent = fileData.report;
+
+            // Highlight.js 자동 감지
+            const result = hljs.highlightAuto(fileData.code);
+            codeArea.innerHTML = result.value;
+
+            // 감지된 언어 레이블 (없으면 UNKNOWN)
+            labelElement.textContent = result.language
+              ? result.language.toUpperCase()
+              : 'UNKNOWN';
+          } else {
+            codeArea.innerHTML = '';
+            reportBlock.textContent = '해당 파일 정보가 없습니다.';
+            labelElement.textContent = 'UNKNOWN';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
