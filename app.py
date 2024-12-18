@@ -1,6 +1,8 @@
 from flask import Flask, request, abort, current_app
 from controllers.webhook_controller import webhook_blueprint
 from controllers.test_controller import test_blueprint
+from controllers.file_controller import file_blueprint
+
 import configparser
 import os
 import sys
@@ -23,6 +25,7 @@ app.config['GITHUB_SECRET'] = "0911"
 # # 블루프린트 등록
 app.register_blueprint(webhook_blueprint, url_prefix="/")
 app.register_blueprint(test_blueprint, url_prefix="/")
+app.register_blueprint(file_blueprint, url_prefix="/")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
