@@ -27,7 +27,7 @@ def build_tree(file_paths):
 
 
 @report_blueprint.route('/report')
-def index():
+def report():
     # 메인 페이지에서 폴더 및 파일 트리 표시
     # 모두 펼친 상태로 렌더링 (토글 없음)
     repositories = get_repository_names(current_app.config)

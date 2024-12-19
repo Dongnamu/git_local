@@ -2,6 +2,7 @@ from flask import Flask, redirect, url_for
 from controllers.webhook_controller import webhook_blueprint
 from controllers.test_controller import test_blueprint
 from controllers.report_controller import report_blueprint
+from controllers.mainPage_controller import mainPage_blueprint
 
 import configparser
 import os
@@ -26,11 +27,12 @@ app.config['GITHUB_SECRET'] = "0911"
 app.register_blueprint(webhook_blueprint, url_prefix="/")
 app.register_blueprint(test_blueprint, url_prefix="/")
 app.register_blueprint(report_blueprint, url_prefix="/")
+app.register_blueprint(mainPage_blueprint, url_prefix="/")
 
 # 기본 경로에서 /test로 리디렉션
 @app.route('/')
 def home():
-    return redirect(url_for('report.index')) 
+    return redirect(url_for('mainPage.mainPage')) 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

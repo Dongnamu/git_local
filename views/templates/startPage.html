@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Notion 스타일 페이지</title>
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* Reset 및 기본 스타일 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background-color: #ffffff; /* 흰색 배경 */
+      color: #333333; /* 어두운 회색 텍스트 */
+    }
+
+    /* Flex 컨테이너 설정 */
+    .container {
+      display: flex;
+      justify-content: center; /* 수평 중앙 정렬 */
+      align-items: center; /* 수직 중앙 정렬 */
+      height: 100vh; /* 전체 화면 높이 */
+    }
+
+    /* 버튼 그룹 스타일 */
+    .button-group {
+      display: flex;
+      gap: 20px; /* 버튼 간 간격 */
+    }
+
+    /* 버튼 스타일 */
+    .button {
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      background-color: #4A90E2; /* 파란색 배경 */
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    /* 버튼 호버 효과 */
+    .button:hover {
+      background-color: #357ABD; /* 호버 시 더 어두운 파란색 */
+      transform: translateY(-2px); /* 살짝 위로 이동 */
+    }
+
+    /* 관리자 버튼 색상 변경 */
+    .button.admin {
+      background-color: #FF6B6B; /* 빨간색 배경 */
+    }
+
+    .button.admin:hover {
+      background-color: #E55A5A; /* 호버 시 더 어두운 빨간색 */
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 600px) {
+      .button {
+        padding: 12px 20px;
+        font-size: 14px;
+      }
+
+      .button-group {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="button-group">
+      <a href="/admin" class="button admin">관리자(Admin)</a>
+      <a href="/user" class="button">사용자(User)</a>
+    </div>
+  </div>
+</body>
+</html>
