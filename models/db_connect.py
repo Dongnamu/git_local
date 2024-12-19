@@ -70,7 +70,39 @@ class DBConnect:
                 query = 'insert into files(name, content_id, git_id) values(%s, %s, %s)'
                 self.__cursor.execute(query, (name, content_id, git_id))
                 self.__conn.commit()
+                
+    def get_repository_names(self):
+        query = 'select distinct name from git_repository'
+        self.__cursor.execute(query)
+        results = self.__cursor.fetchall()
+        names = [result['name'] for result in results]            
+        return names
     
+    def get_repository_id(self, repo_name):
+        query = 'select id from git_repository where name = %s order by id desc limit 1'
+        self.__cursor.execute(query, (repo_name))
+        result = self.__cursor.fetchone()
+        return result['id']
+    
+    def get_files(self, repo_id):
+        query = 'select name, content_id from files where git_id = %s'
+        self.__cursor.execute(query, (repo_id))
+        results = self.__cursor.fetchall()
+        
+        files = []
+        filesData = {}
+        
+        for result in results:
+            query = 'select content, report from content_cache where id=%s'
+            self.__cursor.execute(query, result['content_id'])
+            file_result = self.__cursor.fetchone()
+            files.append(result['name'])
+            filesData[result['name']] = {'code':decode_files(file_result['content']), "report":file_result['report']}
+            
+            
+        return files, filesData
+            
+                    
     def close(self):
         self.__cursor.close()
         self.__conn.close()

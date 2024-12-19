@@ -2,126 +2,37 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>File Explorer (Single Page)</title>
-  <!-- Highlight.js CSS -->
+  <title>File Explorer</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+  <!-- Marked.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background-color: #fff;
-      color: #37352f;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6;
-      display: flex;  
-      height: 100vh;
+      margin:0; padding:0;
+      display:flex; height:100vh;
+      font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height:1.6; color:#37352f; background:#fff;
     }
+    .sidebar { width:260px; background:#f3f3f3; padding:16px; border-right:1px solid #e3e3e3; overflow-y:auto; }
+    .sidebar h2 { margin-top:0; font-size:1.2rem; font-weight:600; }
 
-    .sidebar {
-      width: 260px;
-      background-color: #f3f3f3;
-      border-right: 1px solid #e3e3e3;
-      padding: 16px;
-      overflow-y: auto;
-    }
-    .sidebar h2 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-    .sidebar ul {
-      list-style: none;
-      padding-left: 10px;
-      margin: 0;
-    }
+    .notion-dropdown { position:relative; background:#fafafa; border:1px solid #e3e3e3; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:14px; color:#444; min-width:120px; }
+    .notion-dropdown::after { content:'▾'; float:right; color:#999; }
+    .notion-dropdown-menu { position:absolute; top:100%; left:0; background:#fff; border:1px solid #e3e3e3; border-radius:4px; box-shadow:0 2px 5px rgba(0,0,0,0.1); display:none; z-index:999; }
+    .notion-dropdown-menu.active{display:block;}
+    .notion-dropdown-menu div { padding:8px; font-size:14px; color:#333; }
+    .notion-dropdown-menu div:hover { background:#f0f0f0; }
+    .disabled { opacity:0.5; pointer-events:none; }
 
-    .folder-item {
-      margin: 4px 0;
-      padding: 4px;
-      font-weight: 600;
-      cursor: pointer;
-      border-radius: 4px;
-      user-select: none;
-    }
-    .folder-arrow {
-      width: 16px;
-      display: inline-block;
-      text-align: center;
-      margin-right: 4px;
-    }
-    .folder-contents {
-      margin-left: 8px;
-      padding-left: 12px;
-      border-left: 2px dotted #ccc;
-    }
-    .collapsed {
-      display: none;
-    }
+    .dropdowns { display:flex; gap:20px; justify-content:flex-start; margin-bottom:20px; }
+    .logo-container { text-align:center; margin-bottom:20px; }
 
-    .file-item {
-      margin: 4px 0;
-      padding: 4px;
-      cursor: pointer;
-      border-radius: 4px;
-      user-select: none;
-      font-weight: normal;
-    }
-    .file-item:hover {
-      background-color: #e8e8e8;
-    }
-    .file-item.active {
-      background-color: #d8d8d8;
-      font-weight: 600;
-    }
+    .container { flex:1; margin:0 auto; padding:24px; overflow-y:auto; }
 
-    .container {
-      flex: 1;
-      margin: 0 auto;
-      padding: 24px;
-      overflow-y: auto;
-    }
-
-    /* 로고 컨테이너 */
-    .logo-container {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .logo-container img {
-      max-width: 100px;
-    }
-
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      margin-bottom: 24px;
-    }
-
-    .content-wrapper {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-    .code-block {
-      flex: 1;
-      background-color: #f6f8fa;
-      border-radius: 6px;
-      padding: 16px;
-      border: none;
-      overflow-x: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    .code-language-label {
-      font-size: 12px;
-      color: #888;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .code-block pre {
-      margin: 0;
-    }
-
+    .content-wrapper { display:flex; gap:20px; margin-bottom:30px; }
+    .code-block { flex:1; background:#f6f8fa; border-radius:6px; padding:16px; border:none; overflow-x:auto; display:flex; flex-direction:column; }
+    .code-language-label { font-size:12px; color:#888; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
+    .code-block pre { margin:0; }
     .report-block {
       flex: 1;
       background-color: #fff;
@@ -131,35 +42,66 @@
       min-height: 200px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       overflow-y: auto;
+      
+      /* Notion-like 폰트 스타일 */
+      font-size: 14px;
+      line-height: 1.6;
+      color: #37352f;
+      white-space: pre-wrap;  /* 줄바꿈/공백 유지 */
     }
+
+    /* 텍스트 블록에 약간의 여백을 줄 수도 있음 */
+    .report-block p {
+      margin: 8px 0;
+    }
+
+    /* 코드 블록 느낌을 주고 싶으면, 해당 문구에 <code> 태그를 감싼 뒤 스타일링 가능 */
+    .report-block code {
+      background-color: #f6f8fa;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: "Courier New", Courier, monospace;
+    }
+    ul { list-style:none; padding-left:10px; margin:0; }
+    .folder-item, .file-item { margin:4px 0; padding:4px; border-radius:4px; user-select:none; }
+    .folder-item { font-weight:600; cursor:pointer; }
+    .file-item { font-weight:normal; cursor:pointer; }
+    .file-item:hover { background:#e8e8e8; }
+    .file-item.active { background:#d8d8d8; font-weight:600; }
+    .folder-arrow { width:16px; display:inline-block; text-align:center; margin-right:4px; }
+    .folder-contents { margin-left:8px; padding-left:12px; border-left:2px dotted #ccc; }
+    .collapsed { display:none; }
+
+    .empty-state { color:#999; font-size:14px; font-style:italic; }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <h2>File Explorer</h2>
-    {% macro render_tree(tree) %}
-      <ul>
-        {% for folder_name, folder_data in tree.folders.items() %}
-          <li class="folder-item">
-            <span class="folder-arrow">▾</span>{{ folder_name }}
-            <div class="folder-contents">
-              {{ render_tree(folder_data) }}
-            </div>
-          </li>
-        {% endfor %}
-        {% for file in tree.files %}
-          <li class="file-item" data-file-id="{{ file }}">{{ file }}</li>
-        {% endfor %}
-      </ul>
-    {% endmacro %}
-    {{ render_tree(tree) }}
+    <div id="fileExplorer">
+      <div class="empty-state">Select user & repository to load files.</div>
+    </div>
   </div>
 
   <div class="container">
     <div class="logo-container">
-        <div style="text-align:center; margin-bottom: 20px;">
-            <img src="/static/images/kt_ds_logo.png" alt="Company Logo", style="max-width:100px;">
+      <img src="/static/images/kt_ds_logo.png" alt="Company Logo" style="max-width:100px;">
+    </div>
+
+    <div class="dropdowns">
+      <div class="notion-dropdown" id="usersDropdown">
+        <span id="usersSelected">Select User</span>
+        <div class="notion-dropdown-menu" id="usersMenu">
+          {% for u in users %}
+            <div class="users-option" data-user="{{ u }}">{{ u }}</div>
+          {% endfor %}
         </div>
+      </div>
+
+      <div class="notion-dropdown disabled" id="reposDropdown">
+        <span id="reposSelected">Select Repository</span>
+        <div class="notion-dropdown-menu" id="reposMenu"></div>
+      </div>
     </div>
 
     <h1>코드 & 리포트 뷰어</h1>
@@ -168,62 +110,196 @@
         <div class="code-language-label"></div>
         <pre><code id="codeArea"></code></pre>
       </div>
-      <div class="report-block" id="reportBlock">
-        파일을 선택하세요...
-      </div>
+      <div class="report-block" id="reportBlock">파일을 선택하세요...</div>
     </div>
   </div>
 
-  <!-- Highlight.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 폴더 토글
-      document.querySelectorAll('.folder-item').forEach(folder => {
-        folder.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const subUl = folder.querySelector(':scope > .folder-contents');
-          const arrow = folder.querySelector(':scope > .folder-arrow');
+      const usersDropdown = document.getElementById('usersDropdown');
+      const usersMenu = document.getElementById('usersMenu');
+      const usersSelected = document.getElementById('usersSelected');
 
-          if (subUl && arrow) {
-            subUl.classList.toggle('collapsed');
-            arrow.textContent = subUl.classList.contains('collapsed') ? '▸' : '▾';
-          }
-        });
-      });
+      const reposDropdown = document.getElementById('reposDropdown');
+      const reposMenu = document.getElementById('reposMenu');
+      const reposSelected = document.getElementById('reposSelected');
 
+      const fileExplorer = document.getElementById('fileExplorer');
       const codeArea = document.getElementById('codeArea');
       const reportBlock = document.getElementById('reportBlock');
       const labelElement = document.querySelector('.code-language-label');
 
-      // 파일 선택
-      document.querySelectorAll('.file-item').forEach(fileItem => {
-        fileItem.addEventListener('click', (e) => {
+      let currentUser = null;
+      let currentRepo = null;
+
+      function toggleMenu(menu){menu.classList.toggle('active');}
+      usersDropdown.addEventListener('click', (e) => {e.stopPropagation();toggleMenu(usersMenu);});
+      document.addEventListener('click',()=>{usersMenu.classList.remove('active');reposMenu.classList.remove('active');});
+      
+      document.querySelectorAll('.users-option').forEach(opt=>{
+        opt.addEventListener('click',(e)=>{
           e.stopPropagation();
+          const user=opt.getAttribute('data-user');
+          usersSelected.textContent=user;
+          currentUser=user;
+          usersMenu.classList.remove('active');
+          reposDropdown.classList.remove('disabled');
+          reposSelected.textContent="Select Repository";
+          reposMenu.innerHTML='';
 
-          // 모든 파일에서 active 제거
-          document.querySelectorAll('.file-item').forEach(li => li.classList.remove('active'));
-          fileItem.classList.add('active');
-
-          const fileId = fileItem.getAttribute('data-file-id');
-          fetch(`/file-data/${fileId}`)
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                // 코드 원문 삽입
-                // 하이라이트 처리를 위해 hljs.highlightAuto 사용
-                const result = hljs.highlightAuto(data.code);
-                codeArea.innerHTML = result.value;
-                reportBlock.textContent = data.report;
-                labelElement.textContent = result.language ? result.language.toUpperCase() : 'UNKNOWN';
+          fetch(`/get-suboptions/${user}`)
+            .then(res=>res.json())
+            .then(repos=>{
+              if(repos.length>0){
+                repos.forEach(r=>{
+                  const div=document.createElement('div');
+                  div.textContent=r;
+                  div.className='repo-option';
+                  div.dataset.repo=r;
+                  div.addEventListener('click',(e)=>{
+                    e.stopPropagation();
+                    reposSelected.textContent=r;
+                    reposMenu.classList.remove('active');
+                    currentRepo=r;
+                    loadTreeData(currentUser,currentRepo);
+                  });
+                  reposMenu.appendChild(div);
+                });
               } else {
-                codeArea.textContent = '';
-                reportBlock.textContent = '해당 파일 정보가 없습니다.';
-                labelElement.textContent = 'UNKNOWN';
+                const div=document.createElement('div');
+                div.textContent="No Repositories";
+                div.style.color='#999';
+                reposMenu.appendChild(div);
               }
             });
         });
       });
+
+      reposDropdown.addEventListener('click',(e)=>{
+        if(!reposDropdown.classList.contains('disabled')){
+          e.stopPropagation();
+          toggleMenu(reposMenu);
+        }
+      });
+
+      // /get-tree/<user>/<repo>로 treeData 가져오기
+      function loadTreeData(user,repo){
+        fetch(`/get-tree/${user}/${repo}`)
+          .then(res=>res.json())
+          .then(treeData=>{
+            renderFileExplorer(treeData);
+          });
+      }
+
+      // render treeData into HTML (similar to server-side macro)
+      function renderFileExplorer(tree){
+        fileExplorer.innerHTML='';
+        const ul = renderTree(tree);
+        fileExplorer.appendChild(ul);
+
+        // 바인딩 폴더/파일 클릭 이벤트
+        bindFolderToggle(fileExplorer);
+        bindFileClick(fileExplorer);
+      }
+
+      function renderTree(tree, currentPath = '') {
+        const ul = document.createElement('ul');
+
+        for (let folderName in tree.folders) {
+          const li = document.createElement('li');
+          li.className = 'folder-item';
+
+          const arrow = document.createElement('span');
+          arrow.className = 'folder-arrow';
+          arrow.textContent = '▾';
+
+          li.appendChild(arrow);
+          li.appendChild(document.createTextNode(folderName));
+
+          const contents = document.createElement('div');
+          contents.className = 'folder-contents';
+
+          // 폴더에 진입할 때 경로를 업데이트
+          // currentPath가 ''이면 prefix '/' 없이, 아니라면 '/'를 붙여서 경로 이어가기
+          const newPath = currentPath ? currentPath + '/' + folderName : folderName;
+          contents.appendChild(renderTree(tree.folders[folderName], newPath));
+
+          li.appendChild(contents);
+          ul.appendChild(li);
+        }
+
+        tree.files.forEach(fileName => {
+          const li = document.createElement('li');
+          li.className = 'file-item';
+
+          // 파일의 전체 경로를 구성 (currentPath가 비어있지 않을 경우 '/'로 경로 연결)
+          const fullPath = currentPath ? currentPath + '/' + fileName : fileName;
+
+          li.dataset.fileId = fullPath; 
+          li.textContent = fileName;
+          ul.appendChild(li);
+        });
+
+        return ul;
+      }
+
+      function bindFolderToggle(root){
+        root.querySelectorAll('.folder-item').forEach(folder=>{
+          folder.addEventListener('click',(e)=>{
+            e.stopPropagation();
+            const contents=folder.querySelector(':scope > .folder-contents');
+            const arrow=folder.querySelector(':scope > .folder-arrow');
+            if(contents && arrow){
+              contents.classList.toggle('collapsed');
+              arrow.textContent=contents.classList.contains('collapsed')?'▸':'▾';
+            }
+          });
+        });
+      }
+
+      function bindFileClick(root){
+        root.querySelectorAll('.file-item').forEach(fileItem=>{
+          fileItem.addEventListener('click',(e)=>{
+            e.stopPropagation();
+            root.querySelectorAll('.file-item').forEach(i=>i.classList.remove('active'));
+            fileItem.classList.add('active');
+            const fileId=fileItem.dataset.fileId;
+            loadFileData(currentUser,currentRepo,fileId);
+          });
+        });
+      }
+
+      function loadFileData(user,repo,filename){
+        fetch(`/file-data/${user}/${repo}/${filename}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              const result = hljs.highlightAuto(data.code);
+              codeArea.innerHTML = result.value;
+              labelElement.textContent = result.language ? result.language.toUpperCase() : 'UNKNOWN';
+
+              // Markdown 처리
+              // data.report가 Markdown 문서라고 가정
+              const markdownContent = data.report;
+
+              // Marked.js로 Markdown -> HTML 변환
+              const htmlContent = marked.parse(markdownContent);
+
+              // HTML을 reportBlock에 삽입
+              reportBlock.innerHTML = htmlContent;
+
+              // 하이라이팅 적용
+              reportBlock.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+              });
+            } else {
+              codeArea.textContent = '';
+              reportBlock.textContent = '해당 파일 정보가 없습니다.';
+              labelElement.textContent = 'UNKNOWN';
+            }
+          });
+      }
     });
   </script>
 </body>

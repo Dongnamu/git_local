@@ -1,4 +1,4 @@
-from flask import Flask, request, abort, current_app
+from flask import Flask
 from controllers.webhook_controller import webhook_blueprint
 from controllers.test_controller import test_blueprint
 from controllers.file_controller import file_blueprint
