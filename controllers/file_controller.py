@@ -4,7 +4,7 @@ from models.user_repository_store import Store
 import os
 
 file_blueprint = Blueprint('file', __name__, template_folder=os.path.join('..', 'views', 'templates'))
-store = Store()
+__store = Store()
 
 def build_tree(file_paths):
     # 초기 트리 구조
@@ -26,7 +26,7 @@ def build_tree(file_paths):
     return tree
 
 
-@file_blueprint.route('/')
+@file_blueprint.route('/report')
 def index():
     # 메인 페이지에서 폴더 및 파일 트리 표시
     # 모두 펼친 상태로 렌더링 (토글 없음)
@@ -40,24 +40,24 @@ def index():
         else:
             users[user].append(name)
             
-    store.set_users(users)
+    __store.set_users(users)
     return render_template('index.html', users=list(users.keys()))
 
 @file_blueprint.route('/get-suboptions/<user>')
 def get_suboptions(user):
-    repos = store.get_repositores(user)
+    repos = __store.get_repositores(user)
     return jsonify(repos)
 
 @file_blueprint.route('/get-tree/<user>/<repo>')
 def get_tree(user, repo):
     files, filesData = get_files_from_db(current_app.config, user, repo)
-    store.set_filesData(filesData)
+    __store.set_filesData(filesData)
     tree = build_tree(files)
     return jsonify(tree)
 
 @file_blueprint.route('/file-data/<user>/<repo>/<path:filename>')
 def get_file_data(user, repo, filename):
-    code_report = store.get_fileData(filename)
+    code_report = __store.get_fileData(filename)
     if code_report:
         code_report['success'] = True
         return jsonify(code_report)
