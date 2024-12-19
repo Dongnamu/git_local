@@ -3,7 +3,7 @@ from services.db_retrieve_service import get_repository_names, get_files_from_db
 from models.user_repository_store import Store
 import os
 
-file_blueprint = Blueprint('file', __name__, template_folder=os.path.join('..', 'views', 'templates'))
+report_blueprint = Blueprint('report', __name__, template_folder=os.path.join('..', 'views', 'templates'))
 __store = Store()
 
 def build_tree(file_paths):
@@ -26,7 +26,7 @@ def build_tree(file_paths):
     return tree
 
 
-@file_blueprint.route('/report')
+@report_blueprint.route('/report')
 def index():
     # 메인 페이지에서 폴더 및 파일 트리 표시
     # 모두 펼친 상태로 렌더링 (토글 없음)
@@ -41,21 +41,21 @@ def index():
             users[user].append(name)
             
     __store.set_users(users)
-    return render_template('index.html', users=list(users.keys()))
+    return render_template('report.html', users=list(users.keys()))
 
-@file_blueprint.route('/get-suboptions/<user>')
+@report_blueprint.route('/get-suboptions/<user>')
 def get_suboptions(user):
     repos = __store.get_repositores(user)
     return jsonify(repos)
 
-@file_blueprint.route('/get-tree/<user>/<repo>')
+@report_blueprint.route('/get-tree/<user>/<repo>')
 def get_tree(user, repo):
     files, filesData = get_files_from_db(current_app.config, user, repo)
     __store.set_filesData(filesData)
     tree = build_tree(files)
     return jsonify(tree)
 
-@file_blueprint.route('/file-data/<user>/<repo>/<path:filename>')
+@report_blueprint.route('/file-data/<user>/<repo>/<path:filename>')
 def get_file_data(user, repo, filename):
     code_report = __store.get_fileData(filename)
     if code_report:
