@@ -59,11 +59,8 @@ def get_tree(user, repo):
 def get_file_data(user, repo, filename):
     code_report = store.get_fileData(filename)
     if code_report:
-        return jsonify({
-            "success": True,
-            "code" : code_report["code"],
-            "report" : code_report["report"]
-        })
+        code_report['success'] = True
+        return jsonify(code_report)
     else:
         return jsonify({
             "success": False,
