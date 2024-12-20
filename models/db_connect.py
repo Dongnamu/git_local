@@ -1,6 +1,8 @@
 import json
 import pymysql
-from services.utilities import decode_files, request_to_coder_model
+from services.utilities import decode_files, request_to_model
+from pygments.lexers import guess_lexer_for_filename
+from pygments.util import ClassNotFound
 
 class DBConnect:
     def __init__(self, user, passwd, db, host='localhost', port=3306):
@@ -22,7 +24,7 @@ class DBConnect:
         self.__cursor.execute(query, (repository, hash))
         result = self.__cursor.fetchone()
         if result['count'] > 0:
-            print("Already exist in database. Skipping insert")
+            print("Repository already exist in database. Skipping insert")
             return result['id']
         else:
             # if just created (either new repository or new branch)
@@ -39,11 +41,10 @@ class DBConnect:
             self.__cursor.execute(query, (repository, hash, parent_id, log, commit_time))
             id = self.__cursor.lastrowid
             self.__conn.commit()
-            print("Successfully inserted")
+            print("Repository Successfully inserted")
             return id
     
     def insert_files(self, files, git_id):
-        
         for name, content in files:
             query = 'select id from content_cache where content = %s'
             self.__cursor.execute(query, (content))
@@ -53,9 +54,10 @@ class DBConnect:
                 content_id = result['id']
                 print("fetched file id from table")
             else:
-                review = request_to_coder_model(decode_files(content))
-                query = 'insert into content_cache(content, report) values(%s, %s)'
-                self.__cursor.execute(query, (content, review))
+                print(name)
+                report, code_review = request_to_model('gpt', decode_files(content))
+                query = 'insert into content_cache(content, report, code_review) values(%s, %s, %s)'
+                self.__cursor.execute(query, (content, report, code_review))
                 content_id = self.__cursor.lastrowid
                 self.__conn.commit()
                 print("file added to database")
@@ -93,12 +95,20 @@ class DBConnect:
         filesData = {}
         
         for result in results:
-            query = 'select content, report from content_cache where id=%s'
+            query = 'select content, report, code_review from content_cache where id=%s'
             self.__cursor.execute(query, result['content_id'])
             file_result = self.__cursor.fetchone()
             files.append(result['name'])
-            filesData[result['name']] = {'code':decode_files(file_result['content']), "report":file_result['report']}
+            code = decode_files(file_result['content'])
             
+            try:
+                lexer = guess_lexer_for_filename(result['name'], code)
+                language = lexer.name
+            except ClassNotFound:
+                language = "plaintext"
+                
+            # filesData[result['name']] = {'code':code, "report":file_result['report'], "code_review":file_result['code_review']}
+            filesData[result['name']] = {'code':code, "report":file_result['report'], "code_review":file_result['code_review'], "language":language}
             
         return files, filesData
             

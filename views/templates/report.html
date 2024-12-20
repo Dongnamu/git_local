@@ -2,77 +2,325 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>File Explorer</title>
+  <title>Code Review</title>
+  
+  <!-- 1. Google Fonts에서 Fira Code 포함 -->
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+  
   <!-- Marked.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+  
   <style>
+    /* 1. 글로벌 box-sizing 설정 */
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin:0; padding:0;
       display:flex; height:100vh;
       font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       line-height:1.6; color:#37352f; background:#fff;
+      /* overflow: hidden; */ /* 전체 페이지의 좌우 스크롤 방지 제거 */
     }
-    .sidebar { width:260px; background:#f3f3f3; padding:16px; border-right:1px solid #e3e3e3; overflow-y:auto; }
-    .sidebar h2 { margin-top:0; font-size:1.2rem; font-weight:600; }
+    
+    /* 2. 사이드바 설정 */
+    .sidebar { 
+      width:550px; 
+      background:#f3f3f3; 
+      padding:16px; 
+      border-right:1px solid #e3e3e3; 
+      overflow-y:auto; 
+      flex-shrink:0; /* 사이드바가 축소되지 않도록 설정 */
+      height:100%; /* 기본 높이를 전체 높이로 설정 */
+    }
+    .sidebar h2 { 
+      margin-top:0; 
+      font-size:1.2rem; 
+      font-weight:600; 
+    }
 
-    .notion-dropdown { position:relative; background:#fafafa; border:1px solid #e3e3e3; border-radius:4px; padding:8px 12px; cursor:pointer; font-size:14px; color:#444; min-width:120px; }
-    .notion-dropdown::after { content:'▾'; float:right; color:#999; }
-    .notion-dropdown-menu { position:absolute; top:100%; left:0; background:#fff; border:1px solid #e3e3e3; border-radius:4px; box-shadow:0 2px 5px rgba(0,0,0,0.1); display:none; z-index:999; }
-    .notion-dropdown-menu.active{display:block;}
-    .notion-dropdown-menu div { padding:8px; font-size:14px; color:#333; }
-    .notion-dropdown-menu div:hover { background:#f0f0f0; }
-    .disabled { opacity:0.5; pointer-events:none; }
+    /* 드롭다운 스타일 */
+    .notion-dropdown { 
+      position:relative; 
+      background:#fafafa; 
+      border:1px solid #e3e3e3; 
+      border-radius:4px; 
+      padding:8px 12px; 
+      cursor:pointer; 
+      font-size:14px; 
+      color:#444; 
+      min-width:120px; 
+    }
+    .notion-dropdown::after { 
+      content:'▾'; 
+      float:right; 
+      color:#999; 
+    }
+    .notion-dropdown-menu { 
+      position:absolute; 
+      top:100%; 
+      left:0; 
+      background:#fff; 
+      border:1px solid #e3e3e3; 
+      border-radius:4px; 
+      box-shadow:0 2px 5px rgba(0,0,0,0.1); 
+      display:none; 
+      z-index:999; 
+    }
+    .notion-dropdown-menu.active { display:block; }
+    .notion-dropdown-menu div { 
+      padding:8px; 
+      font-size:14px; 
+      color:#333; 
+    }
+    .notion-dropdown-menu div:hover { 
+      background:#f0f0f0; 
+    }
+    .disabled { 
+      opacity:0.5; 
+      pointer-events:none; 
+    }
 
-    .dropdowns { display:flex; gap:20px; justify-content:flex-start; margin-bottom:20px; }
-    .logo-container { text-align:center; margin-bottom:20px; }
+    .dropdowns { 
+      display:flex; 
+      gap:20px; 
+      justify-content:flex-start; 
+      margin-bottom:20px; 
+    }
+    .logo-container { 
+      text-align:center; 
+      margin-bottom:20px; 
+    }
 
-    .container { flex:1; margin:0 auto; padding:24px; overflow-y:auto; }
+    /* 3. 컨테이너 설정 */
+    .container { 
+      flex:1; 
+      margin:0 auto; 
+      padding:24px; 
+      overflow-y:auto; 
+      display:flex;
+      flex-direction: column; /* 기본 방향을 컬럼으로 설정 */
+      height: 100%;
+    }
 
-    .content-wrapper { display:flex; gap:20px; margin-bottom:30px; }
-    .code-block { flex:1; background:#f6f8fa; border-radius:6px; padding:16px; border:none; overflow-x:auto; display:flex; flex-direction:column; }
-    .code-language-label { font-size:12px; color:#888; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; }
-    .code-block pre { margin:0; }
+    /* 4. content-wrapper 설정 */
+    .content-wrapper { 
+      display:flex; 
+      gap:20px; 
+      margin-bottom:30px; 
+      flex:1 1 auto; 
+      overflow: hidden; /* 내부 오버플로우 방지 */
+    }
+
+    /* 5. 코드 섹션과 리포트 섹션 설정 */
+    .code-section, .report-section {
+      display:flex;
+      flex-direction:column;
+      flex:1 1 0;
+      min-width:0; /* Flex 아이템이 축소 가능하도록 설정 */
+    }
+
+    /* 섹션 제목 스타일 */
+    .code-section h3, .report-section h3 {
+      margin-bottom:8px;
+      font-size:1.1rem;
+      font-weight:600;
+    }
+
+    /* 6. 코드 블록 스타일 */
+    .code-block { 
+      background:#f6f8fa; 
+      border-radius:6px; 
+      padding:8px; /* 패딩 감소 */
+      border:none; 
+      overflow-x:auto; 
+      display:flex; 
+      flex-direction:column; 
+      flex:1 1 auto; /* Flex 아이템이 축소 가능하도록 설정 */
+    }
+    .code-language-label { 
+      font-size:12px; 
+      color:#888; 
+      margin-bottom:4px; /* 패딩 감소 */
+      text-transform:uppercase; 
+      letter-spacing:0.5px; 
+    }
+    .code-block pre { 
+      margin:0; 
+      white-space: pre-wrap; /* 긴 줄을 자동으로 줄바꿈 */
+      word-wrap: break-word; /* 긴 단어를 자동으로 줄바꿈 */
+    }
+
+    /* 7. 탭 헤더 스타일 */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #e3e3e3;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      padding: 8px 16px; /* 패딩 감소 */
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      background-color: #fafafa;
+      margin-right: 5px;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    }
+
+    .tab.active {
+      background-color: #fff;
+      border-color: #e3e3e3 #e3e3e3 #fff #e3e3e3;
+      font-weight: 600;
+    }
+
+    /* 8. 탭 콘텐츠 스타일 */
+    .tab-content {
+      display: none;
+      flex:1 1 auto;
+      overflow: auto; /* 내부 콘텐츠가 넘칠 경우 스크롤 */
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* 9. 리포트 블록 스타일 */
     .report-block {
-      flex: 1;
       background-color: #fff;
       border: 1px solid #e3e3e3;
       border-radius: 6px;
-      padding: 16px;
+      padding:8px; /* 패딩 감소 */
       min-height: 200px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       overflow-y: auto;
       
       /* Notion-like 폰트 스타일 */
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 16px; /* 폰트 크기 유지 */
+      line-height: 1.2; /* 줄 간격 더 줄임 */
       color: #37352f;
       white-space: pre-wrap;  /* 줄바꿈/공백 유지 */
     }
 
-    /* 텍스트 블록에 약간의 여백을 줄 수도 있음 */
-    .report-block p {
-      margin: 8px 0;
+    /* 10. 리포트 섹션 내 모든 블록 요소의 마진 및 패딩 최소화 */
+    .report-block p,
+    .report-block h1,
+    .report-block h2,
+    .report-block h3,
+    .report-block h4,
+    .report-block h5,
+    .report-block h6,
+    .report-block ul,
+    .report-block ol,
+    .report-block blockquote,
+    .report-block pre {
+      margin-top: 2px;
+      margin-bottom: 2px;
+      padding: 0;
     }
 
-    /* 코드 블록 느낌을 주고 싶으면, 해당 문구에 <code> 태그를 감싼 뒤 스타일링 가능 */
-    .report-block code {
+    .report-block li {
+      margin: 0;
+      padding: 0 0 0 20px; /* 리스트 아이템의 들여쓰기만 유지 */
+    }
+
+    /* 11. 코드 블록 스타일 */
+    .report-block code, .code-block code {
+      font-family: 'Fira Code', monospace; /* 동일한 폰트 적용 */
+      font-weight: 500;
+      font-size: 13px;
       background-color: #f6f8fa;
       padding: 2px 4px;
       border-radius: 4px;
-      font-family: "Courier New", Courier, monospace;
     }
-    ul { list-style:none; padding-left:10px; margin:0; }
-    .folder-item, .file-item { margin:4px 0; padding:4px; border-radius:4px; user-select:none; }
-    .folder-item { font-weight:600; cursor:pointer; }
-    .file-item { font-weight:normal; cursor:pointer; }
-    .file-item:hover { background:#e8e8e8; }
-    .file-item.active { background:#d8d8d8; font-weight:600; }
-    .folder-arrow { width:16px; display:inline-block; text-align:center; margin-right:4px; }
-    .folder-contents { margin-left:8px; padding-left:12px; border-left:2px dotted #ccc; }
-    .collapsed { display:none; }
 
-    .empty-state { color:#999; font-size:14px; font-style:italic; }
+    /* 12. 파일 탐색기 스타일 */
+    ul { 
+      list-style:none; 
+      padding-left:10px; 
+      margin:0; 
+    }
+    .folder-item, .file-item { 
+      margin:4px 0; 
+      padding:4px; 
+      border-radius:4px; 
+      user-select:none; 
+    }
+    .folder-item { 
+      font-weight:600; 
+      cursor:pointer; 
+    }
+    .file-item { 
+      font-weight:normal; 
+      cursor:pointer; 
+    }
+    .file-item:hover { 
+      background:#e8e8e8; 
+    }
+    .file-item.active { 
+      background:#d8d8d8; 
+      font-weight:600; 
+    }
+    .folder-arrow { 
+      width:16px; 
+      display:inline-block; 
+      text-align:center; 
+      margin-right:4px; 
+    }
+    .folder-contents { 
+      margin-left:8px; 
+      padding-left:12px; 
+      border-left:2px dotted #ccc; 
+    }
+    .collapsed { 
+      display:none; 
+    }
+
+    .empty-state { 
+      color:#999; 
+      font-size:14px; 
+      font-style:italic; 
+    }
+
+    /* 13. 반응형 디자인: 사이드바 상단 배치 및 높이 조정 */
+    @media (max-width: 600px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width:100%;
+        height:30vh; /* 화면 높이의 30%로 설정 */
+        max-height:40vh; /* 최대 높이를 40%로 제한 */
+        border-right:none;
+        border-bottom:1px solid #e3e3e3;
+        overflow-y:auto; /* 내부 스크롤 활성화 */
+      }
+      .dropdowns {
+        flex-direction: column;
+        gap:15px;
+      }
+      .content-wrapper {
+        flex-direction: column;
+        gap:20px; /* 섹션 간 간격 유지 */
+      }
+      .code-section, .report-section {
+        width:100%;
+      }
+      .code-block, .report-block {
+        padding:8px; /* 패딩 추가 감소 */
+      }
+    }
+    
+    /* 14. 이미지가 부모 컨테이너의 너비를 초과하지 않도록 설정 (선택 사항) */
+    .report-block img, .code-block img {
+      max-width: 100%;
+      height: auto;
+    }
   </style>
 </head>
 <body>
@@ -104,17 +352,42 @@
       </div>
     </div>
 
-    <h1>코드 & 리포트 뷰어</h1>
     <div class="content-wrapper">
-      <div class="code-block">
-        <div class="code-language-label"></div>
-        <pre><code id="codeArea"></code></pre>
+      <!-- 원본 코드 섹션 -->
+      <div class="code-section">
+        <h3>원본 코드</h3>
+        <div class="code-block">
+          <div class="code-language-label"></div>
+          <pre><code id="codeArea"></code></pre>
+        </div>
       </div>
-      <div class="report-block" id="reportBlock">파일을 선택하세요...</div>
+
+      <!-- 분석 및 코드 개선 섹션 -->
+      <div class="report-section">
+        <!-- 탭 헤더 -->
+        <div class="tabs">
+          <div class="tab active" data-tab="analysis">분석</div>
+          <div class="tab" data-tab="improvement">코드 개선</div>
+        </div>
+
+        <!-- 탭 콘텐츠 -->
+        <div class="tab-content active" id="analysis">
+          <div class="report-block" id="analysisBlock">
+            파일을 선택하세요...
+          </div>
+        </div>
+        <div class="tab-content" id="improvement">
+          <div class="report-block" id="improvementBlock">
+            파일을 선택하세요...
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- Highlight.js 라이브러리 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const usersDropdown = document.getElementById('usersDropdown');
@@ -127,8 +400,12 @@
 
       const fileExplorer = document.getElementById('fileExplorer');
       const codeArea = document.getElementById('codeArea');
-      const reportBlock = document.getElementById('reportBlock');
+      const analysisBlock = document.getElementById('analysisBlock');
+      const improvementBlock = document.getElementById('improvementBlock');
       const labelElement = document.querySelector('.code-language-label');
+
+      const tabs = document.querySelectorAll('.tab');
+      const tabContents = document.querySelectorAll('.tab-content');
 
       let currentUser = null;
       let currentRepo = null;
@@ -221,7 +498,6 @@
           contents.className = 'folder-contents';
 
           // 폴더에 진입할 때 경로를 업데이트
-          // currentPath가 ''이면 prefix '/' 없이, 아니라면 '/'를 붙여서 경로 이어가기
           const newPath = currentPath ? currentPath + '/' + folderName : folderName;
           contents.appendChild(renderTree(tree.folders[folderName], newPath));
 
@@ -233,7 +509,6 @@
           const li = document.createElement('li');
           li.className = 'file-item';
 
-          // 파일의 전체 경로를 구성 (currentPath가 비어있지 않을 경우 '/'로 경로 연결)
           const fullPath = currentPath ? currentPath + '/' + fileName : fileName;
 
           li.dataset.fileId = fullPath; 
@@ -270,36 +545,117 @@
         });
       }
 
-      function loadFileData(user,repo,filename){
+      function loadFileData(user, repo, filename){
+        // 로딩 상태 표시 (선택 사항)
+        codeArea.innerHTML = '로딩 중...';
+        analysisBlock.innerHTML = '로딩 중...';
+        improvementBlock.innerHTML = '로딩 중...';
+        labelElement.textContent = '';
+
         fetch(`/file-data/${user}/${repo}/${filename}`)
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Network response was not ok (${response.status})`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.success) {
-              const result = hljs.highlightAuto(data.code);
-              codeArea.innerHTML = result.value;
-              labelElement.textContent = result.language ? result.language.toUpperCase() : 'UNKNOWN';
+              const language = data.language || 'plaintext';
+              
+              // 하이라이팅을 시도하고 오류가 발생하면 원본 코드를 표시
+              let highlightedCode = '';
+              try {
+                highlightedCode = hljs.highlight(data.code, { language }).value;
+              } catch (err) {
+                console.error('Highlighting error:', err);
+                // 하이라이팅 실패 시 자동 하이라이팅 또는 원본 코드 표시
+                highlightedCode = hljs.highlightAuto(data.code).value;
+                // 또는 하이라이팅 없이 그냥 코드 표시
+                // highlightedCode = data.code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+              }
+              
+              codeArea.innerHTML = highlightedCode;
+              labelElement.textContent = language.toUpperCase();
 
-              // Markdown 처리
-              // data.report가 Markdown 문서라고 가정
-              const markdownContent = data.report;
+              // 분석 섹션 업데이트
+              const analysisContent = data.report; // 서버 응답에 따라 필드 이름 조정
+              if (analysisContent) {
+                try {
+                  analysisBlock.innerHTML = marked.parse(analysisContent);
+                  analysisBlock.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                  });
+                } catch (err) {
+                  console.error('Analysis parsing error:', err);
+                  analysisBlock.textContent = '분석 데이터를 로드하는 중 오류가 발생했습니다.';
+                }
+              } else {
+                analysisBlock.textContent = '분석 데이터가 없습니다.';
+              }
 
-              // Marked.js로 Markdown -> HTML 변환
-              const htmlContent = marked.parse(markdownContent);
+              // 코드 개선 섹션 업데이트
+              const improvementContent = data.code_review; // 서버 응답에 따라 필드 이름 조정
+              if (improvementContent) {
+                try {
+                  improvementBlock.innerHTML = marked.parse(improvementContent);
+                  improvementBlock.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                  });
+                } catch (err) {
+                  console.error('Code Improvement parsing error:', err);
+                  improvementBlock.textContent = '코드 개선 데이터를 로드하는 중 오류가 발생했습니다.';
+                }
+              } else {
+                improvementBlock.textContent = '코드 개선 데이터가 없습니다.';
+              }
 
-              // HTML을 reportBlock에 삽입
-              reportBlock.innerHTML = htmlContent;
-
-              // 하이라이팅 적용
-              reportBlock.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
-              });
+              // 초기 탭 설정 (분석 탭 활성화)
+              setActiveTab('analysis');
             } else {
+              // 서버 응답이 실패한 경우 처리
               codeArea.textContent = '';
-              reportBlock.textContent = '해당 파일 정보가 없습니다.';
+              analysisBlock.textContent = '해당 파일 정보가 없습니다.';
+              improvementBlock.textContent = '해당 파일 정보가 없습니다.';
               labelElement.textContent = 'UNKNOWN';
             }
+          })
+          .catch(error => {
+            // 네트워크 오류 또는 JSON 파싱 오류 처리
+            console.error('Fetch error:', error);
+            codeArea.textContent = '';
+            analysisBlock.textContent = '파일 데이터를 로드하는 중 오류가 발생했습니다.';
+            improvementBlock.textContent = '파일 데이터를 로드하는 중 오류가 발생했습니다.';
+            labelElement.textContent = 'UNKNOWN';
           });
+        }
+
+      // 탭 전환 함수
+      function setActiveTab(tabName) {
+        tabs.forEach(tab => {
+          if(tab.dataset.tab === tabName){
+            tab.classList.add('active');
+          } else {
+            tab.classList.remove('active');
+          }
+        });
+
+        tabContents.forEach(content => {
+          if(content.id === tabName){
+            content.classList.add('active');
+          } else {
+            content.classList.remove('active');
+          }
+        });
       }
+
+      // 탭 클릭 이벤트 바인딩
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const selectedTab = tab.dataset.tab;
+          setActiveTab(selectedTab);
+        });
+      });
     });
   </script>
 </body>

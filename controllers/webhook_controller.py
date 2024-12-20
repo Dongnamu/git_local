@@ -29,6 +29,7 @@ def github_webhook():
         data = request.get_json()
         # 서비스 레벨 로직 처리
         response_msg = handle_github_event(data, event, current_app.config)
+        
         return {"msg": response_msg}
     else:
         print(f"Unhandled event: {event}")

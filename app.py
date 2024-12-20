@@ -3,6 +3,7 @@ from controllers.webhook_controller import webhook_blueprint
 from controllers.test_controller import test_blueprint
 from controllers.report_controller import report_blueprint
 from controllers.mainPage_controller import mainPage_blueprint
+from controllers.admin_controller import admin_blueprint
 
 import configparser
 import os
@@ -28,6 +29,7 @@ app.register_blueprint(webhook_blueprint, url_prefix="/")
 app.register_blueprint(test_blueprint, url_prefix="/")
 app.register_blueprint(report_blueprint, url_prefix="/")
 app.register_blueprint(mainPage_blueprint, url_prefix="/")
+app.register_blueprint(admin_blueprint, url_prefix="/")
 
 # 기본 경로에서 /test로 리디렉션
 @app.route('/')

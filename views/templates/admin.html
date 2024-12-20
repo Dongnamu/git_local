@@ -1,0 +1,178 @@
+<!-- templates/admin.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 페이지</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9f9f9;
+            color: #333333;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .list-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            padding: 10px 0;
+            border-bottom: 1px solid #e3e3e3;
+            font-size: 1.1rem;
+        }
+
+        .user-list, .repo-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .user-item {
+            padding: 8px 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e3e3e3;
+            position: relative;
+            font-size: 1rem;
+        }
+
+        .user-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .repo-list {
+            display: none;
+            padding-left: 20px;
+        }
+
+        .repo-item {
+            padding: 6px 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e3e3e3;
+            font-size: 0.95rem;
+        }
+
+        .repo-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+            margin-left: 10px;
+            font-size: 0.9rem;
+        }
+
+        .expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+
+        .back-button {
+            margin-top: 20px;
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #4A90E2;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .list-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .user-item, .repo-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .toggle-icon {
+                margin-left: 0;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>관리자 페이지</h1>
+    <div class="list-container">
+        <div class="list-header">
+            <span>사용자</span>
+            <span>커밋 횟수</span>
+        </div>
+        <ul class="user-list">
+            {% for user in users %}
+            <li class="user-item" data-user="{{ user.name }}">
+                <span>{{ user.name }}</span>
+                <span>{{ user.commit_count }}</span>
+                <span class="toggle-icon">▶</span>
+            </li>
+            <ul class="repo-list" id="repo-{{ user.name }}">
+                {% for repo in user.repositories %}
+                <li class="repo-item" data-user="{{ user.name }}" data-repo="{{ repo.name }}">
+                    <span>{{ repo.name }}</span>
+                    <span>{{ repo.commit_count }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </ul>
+    </div>
+    <a href="{{ url_for('mainPage.mainPage') }}" class="back-button">메인 페이지로 돌아가기</a>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userItems = document.querySelectorAll('.user-item');
+            userItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const userName = item.getAttribute('data-user');
+                    const repoList = document.getElementById(`repo-${userName}`);
+                    if(repoList.style.display === 'block') {
+                        repoList.style.display = 'none';
+                        item.classList.remove('expanded');
+                    } else {
+                        // 다른 모든 리포지토리 리스트를 닫음
+                        document.querySelectorAll('.repo-list').forEach(list => list.style.display = 'none');
+                        document.querySelectorAll('.user-item').forEach(i => i.classList.remove('expanded'));
+
+                        repoList.style.display = 'block';
+                        item.classList.add('expanded');
+                    }
+                });
+            });
+
+            const repoItems = document.querySelectorAll('.repo-item');
+            repoItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 부모 요소의 클릭 이벤트를 방지
+                    const userName = item.getAttribute('data-user');
+                    const repoName = item.getAttribute('data-repo');
+                    window.location.href = `/report/${userName}/${repoName}`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
