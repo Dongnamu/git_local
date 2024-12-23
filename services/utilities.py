@@ -6,11 +6,18 @@ import openai
 from openai import APIError
 openai.api_key = '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'
 openai.organization = 'org-M2oxD2tCOmoMHTB7es7MLhSf'
+from models.extensions_filtering import no_comment_extensions
+from pathlib import Path
 
 def decode_files(blob):
     return base64.b64decode(blob).decode("utf-8")
 
-def request_to_model(model, prompt):
+def request_to_model(model, name, prompt):
+    extension = ''.join(Path(name).suffixes).lower()
+    if extension in no_comment_extensions or '.min' in extension or '.map' in extension:
+        print("This file is not supported for code review.")
+        return "해당 파일은 리포트를 제공하지 않습니다.", "해당 파일은 코드 리뷰를 제공하지 않습니다."
+    
     report_message = '''
 당신은 코드를 리뷰하는 리뷰어 역할입니다. 당신은 코드 자체의 난이도와 완성도, 품질이 어떤지 리뷰하며, 주어진 코드의 보안적 결함성이 있는지 평가해야 합니다. 주어진 코드에 대해 평가문을 작성해 주시기를 바라며, 한국말로 작성주시기 바랍니다. 코드 수정 추천 문구는 작성하지 말아주시기 바랍니다.
 다음은 예시 평가문입니다. 이를 참고하여 리뷰를 작성해 주세요. Markdown 문법을 사용하여 작성해주시기 바랍니다.

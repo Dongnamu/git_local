@@ -55,7 +55,7 @@ class DBConnect:
                 print("fetched file id from table")
             else:
                 print(name)
-                report, code_review = request_to_model('gpt', decode_files(content))
+                report, code_review = request_to_model('gpt', name, decode_files(content))
                 query = 'insert into content_cache(content, report, code_review) values(%s, %s, %s)'
                 self.__cursor.execute(query, (content, report, code_review))
                 content_id = self.__cursor.lastrowid
