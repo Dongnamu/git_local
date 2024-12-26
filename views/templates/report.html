@@ -4,11 +4,16 @@
   <meta charset="UTF-8" />
   <title>Code Review</title>
   
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
   <!-- 1. Google Fonts에서 Fira Code 포함 -->
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
   
+  <!-- Highlight.js vs 테마 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/vs.min.css">
+
   <!-- Marked.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
   
@@ -49,6 +54,11 @@
       margin-top: 0;
       font-size: 1.2rem;
       font-weight: 600;
+    }
+
+    .hljs-comment {
+      color: #008000 !important;  /* 예: 초록색 */
+      font-style: italic;         /* 기울임체 적용 (선택) */
     }
 
     /* 드롭다운 스타일 */

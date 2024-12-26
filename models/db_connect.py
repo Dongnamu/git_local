@@ -86,6 +86,12 @@ class DBConnect:
         result = self.__cursor.fetchone()
         return result['id']
     
+    def get_repository_log(self, repo_name):
+        query = 'select log from git_repository where name = %s order by id desc limit 1'
+        self.__cursor.execute(query, (repo_name))
+        result = self.__cursor.fetchone()
+        return result['log']
+    
     def get_files(self, repo_id):
         query = 'select name, content_id from files where git_id = %s'
         self.__cursor.execute(query, (repo_id))
